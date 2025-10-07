@@ -1,207 +1,267 @@
-ESPECIALIDADES = ("Ortopedia", "Pediatria", "Plantão")
+from datetime import datetime
+
 class Pessoa:
-    def __init__(self, nome, idade):
-        self._nome = nome
-        self._idade = idade
+    def __init__(self, nome, data_nasc, cpf=None):
+        self.nome = nome
+        self.data_nasc = data_nasc
+        self._cpf = None
+        if cpf:
+            self.cpf = cpf
 
     @property
-    def idade(self):
-        return self._idade
+    def cpf(self):
+        return self._cpf
 
-    @idade.setter
-    def idade(self, valor):
-        if valor < 0:
-            print("Idade inválida, definindo como 0")
-            self._idade = 0
+    @cpf.setter
+    def cpf(self, valor):
+        if valor is None or valor == "":
+            self._cpf = None
+            return
+        if isinstance(valor, str) and len(valor) == 11 and valor.isdigit():
+            self._cpf = valor
         else:
-            self._idade = valor
-
-    def __str__(self):
-        return f"Nome: {self._nome}, Idade: {self._idade}"
+            raise ValueError("CPF deve conter exatamente 11 números.")
 
 class Paciente(Pessoa):
-    def __init__(self, nome, idade, cpf):
-        super().__init__(nome, idade)
-        self._cpf = cpf
+    def __init__(self, nome, data_nasc, cpf, gravidade):
+        super().__init__(nome, data_nasc, cpf)
+        self.gravidade = gravidade
 
     def __str__(self):
-        return f"Paciente - {super().__str__()}, CPF: {self._cpf}"
+        return f"Nome: {self.nome} | Nasc.: {self.data_nasc} | CPF: {self.cpf} | Gravidade: {self.gravidade}"
 
 class Medico(Pessoa):
-    def __init__(self, nome, idade, especialidade):
-        super().__init__(nome, idade)
-        self._especialidade = especialidade
+    def __init__(self, nome, data_nasc, crm, especialidade, cpf=None):
+        super().__init__(nome, data_nasc, cpf)
+        self.crm = crm
+        self.especialidade = especialidade
 
     def __str__(self):
-        return f"Médico - {super().__str__()}, Especialidade: {self._especialidade}"
+        return f"Nome: {self.nome} | Nasc.: {self.data_nasc} | CRM: {self.crm} | Especialidade: {self.especialidade}"
 
 pacientes = []
 medicos = []
+gravidades = ("Verde", "Amarelo", "Vermelho")
 
-def validar_nome(nome):
-    return all(ch.isalpha() or ch.isspace() for ch in nome)
-def validar_cpf(cpf):
-    return len(cpf) == 11 and cpf.isdigit()
+def validar_data(data_texto):
+    try:
+        datetime.strptime(data_texto, "%d/%m/%Y")
+        return True
+    except ValueError:
+        return False
+
+def validar_crm(crm_texto):
+    if not isinstance(crm_texto, str):
+        return False
+    crm = crm_texto.strip().upper()
+    if crm.startswith("CRM"):
+        crm = crm[3:].strip()
+    crm = crm.replace("-", " ").replace("/", " ").replace(".", " ")
+    parts = crm.split()
+    if len(parts) == 1:
+        if parts[0].isdigit() and 4 <= len(parts[0]) <= 7:
+            return True
+        return False
+    elif len(parts) == 2:
+        a, b = parts
+        if a.isalpha() and len(a) == 2 and b.isdigit() and 4 <= len(b) <= 7:
+            return True
+        if b.isalpha() and len(b) == 2 and a.isdigit() and 4 <= len(a) <= 7:
+            return True
+        return False
+    else:
+        return False
 
 def cadastrar_paciente():
-    try:
-        nome = input("Nome do paciente: ").strip()
-        if not validar_nome(nome):
-            print("Nome inválido! Não pode conter números ou símbolos.")
-            return
-
-        idade = int(input("Idade: ").strip())
-        cpf = input("CPF (11 números): ").strip()
-
-        if not validar_cpf(cpf):
-            print("CPF inválido! Deve conter exatamente 11 números.")
-            return
-
-        paciente = Paciente(nome, idade, cpf)
-        pacientes.append(paciente)
-        print("Paciente cadastrado com sucesso!")
-    except Exception as e:
-        print("Erro ao cadastrar paciente:", e)
+    print("\n--- Cadastro de Paciente ---")
+    nome = input("Nome: ")
+    while any(char.isdigit() for char in nome):
+        print("Erro: o nome não pode conter números.")
+        nome = input("Nome: ")
+    data_nasc = input("Data de nascimento (dd/mm/aaaa): ")
+    while not validar_data(data_nasc):
+        print("Data inválida! Use o formato dd/mm/aaaa.")
+        data_nasc = input("Data de nascimento: ")
+    while True:
+        cpf = input("CPF (11 números): ")
+        if len(cpf) == 11 and cpf.isdigit():
+            break
+        else:
+            print("CPF inválido! Digite exatamente 11 números.")
+    print("Nível de gravidade:")
+    for i, cor in enumerate(gravidades):
+        print(f"{i + 1}. {cor}")
+    while True:
+        op = input("Escolha (1-3): ").strip()
+        if op in ("1", "2", "3"):
+            gravidade = gravidades[int(op) - 1]
+            break
+        else:
+            print("Erro: digite apenas 1, 2 ou 3.")
+    paciente = Paciente(nome, data_nasc, cpf, gravidade)
+    pacientes.append(paciente)
+    print("Paciente cadastrado com sucesso!")
 
 def listar_pacientes():
+    print("\n--- Lista de Pacientes ---")
     if not pacientes:
         print("Nenhum paciente cadastrado.")
-    else:
-        for i, p in enumerate(pacientes):
-            print(f"{i} - {p}")
+        return
+    for i, p in enumerate(pacientes):
+        print(f"{i + 1}. {p}")
 
 def editar_paciente():
     listar_pacientes()
     try:
-        idx = int(input("Digite o número do paciente para editar: "))
-        if idx < 0 or idx >= len(pacientes):
-            print("Paciente não encontrado.")
-            return
-
-        nome = input("Novo nome: ").strip()
-        if not validar_nome(nome):
-            print("Nome inválido!")
-            return
-        idade = int(input("Nova idade: ").strip())
-        cpf = input("Novo CPF (11 números): ").strip()
-        if not validar_cpf(cpf):
-            print("CPF inválido!")
-            return
-
-        pacientes[idx] = Paciente(nome, idade, cpf)
-        print("Paciente atualizado com sucesso!")
-    except:
-        print("Erro ao editar paciente.")
+        indice = int(input("Informe o número do paciente para editar: ")) - 1
+        if indice < 0 or indice >= len(pacientes):
+            raise IndexError
+        p = pacientes[indice]
+        print(f"Editando: {p.nome}")
+        novo_nome = input("Novo nome (vazio p/ manter): ")
+        if novo_nome != "":
+            while any(char.isdigit() for char in novo_nome):
+                print("Erro: o nome não pode conter números.")
+                novo_nome = input("Novo nome: ")
+            p.nome = novo_nome
+        nova_data = input("Nova data de nascimento (dd/mm/aaaa ou vazio p/ manter): ")
+        if nova_data != "":
+            while not validar_data(nova_data):
+                print("Data inválida! Use o formato dd/mm/aaaa.")
+                nova_data = input("Nova data de nascimento: ")
+            p.data_nasc = nova_data
+        novo_cpf = input("Novo CPF (11 números ou vazio p/ manter): ")
+        if novo_cpf != "":
+            try:
+                p.cpf = novo_cpf
+            except ValueError as e:
+                print(e)
+        print("Níveis de gravidade: 1-Verde, 2-Amarelo, 3-Vermelho")
+        while True:
+            nova_gravidade = input("Nova gravidade (1-3 ou vazio p/ manter): ").strip()
+            if nova_gravidade == "":
+                break
+            if nova_gravidade in ("1", "2", "3"):
+                p.gravidade = gravidades[int(nova_gravidade) - 1]
+                break
+            else:
+                print("Erro: digite apenas 1, 2 ou 3 ou deixe vazio para manter.")
+        print("Paciente editado com sucesso!")
+    except (ValueError, IndexError):
+        print("Erro: paciente não encontrado.")
 
 def remover_paciente():
     listar_pacientes()
     try:
-        idx = int(input("Digite o número do paciente para remover: "))
-        if idx < 0 or idx >= len(pacientes):
-            print("Paciente não encontrado.")
-            return
-        pacientes.pop(idx)
-        print("Paciente removido com sucesso!")
-    except:
-        print("Erro ao remover paciente.")
+        indice = int(input("Informe o número do paciente para remover: ")) - 1
+        if indice < 0 or indice >= len(pacientes):
+            raise IndexError
+        removido = pacientes.pop(indice)
+        print(f"Paciente '{removido.nome}' removido com sucesso!")
+    except (ValueError, IndexError):
+        print("Erro: paciente não encontrado.")
 
 def cadastrar_medico():
-    try:
-        nome = input("Nome do médico: ").strip()
-        if not validar_nome(nome):
-            print("Nome inválido! Não pode conter números ou símbolos.")
-            return
-
-        idade = int(input("Idade: ").strip())
-        print("Especialidades disponíveis:", ESPECIALIDADES)
-        esp = input("Digite a especialidade: ").strip()
-        if esp not in ESPECIALIDADES:
-            print("Especialidade inválida!")
-            return
-
-        medico = Medico(nome, idade, esp)
-        medicos.append(medico)
-        print("Médico cadastrado com sucesso!")
-    except Exception as e:
-        print("Erro ao cadastrar médico:", e)
+    print("\n--- Cadastro de Médico ---")
+    nome = input("Nome: ")
+    while any(char.isdigit() for char in nome):
+        print("Erro: o nome não pode conter números.")
+        nome = input("Nome: ")
+    data_nasc = input("Data de nascimento (dd/mm/aaaa): ")
+    while not validar_data(data_nasc):
+        print("Data inválida! Use o formato dd/mm/aaaa.")
+        data_nasc = input("Data de nascimento: ")
+    crm = input("CRM (ex: 'CRM/SP 123456' ou '123456'): ")
+    while not validar_crm(crm):
+        print("CRM inválido! Use um formato como '123456' ou 'CRM/SP 123456'.")
+        crm = input("CRM: ")
+    especialidade = input("Especialidade: ")
+    medico = Medico(nome, data_nasc, crm, especialidade)
+    medicos.append(medico)
+    print("Médico cadastrado com sucesso!")
 
 def listar_medicos():
+    print("\n--- Lista de Médicos ---")
     if not medicos:
         print("Nenhum médico cadastrado.")
-    else:
-        for i, m in enumerate(medicos):
-            print(f"{i} - {m}")
+        return
+    for i, m in enumerate(medicos):
+        print(f"{i + 1}. {m}")
 
 def editar_medico():
     listar_medicos()
     try:
-        idx = int(input("Digite o número do médico para editar: "))
-        if idx < 0 or idx >= len(medicos):
-            print("Médico não encontrado.")
-            return
-
-        nome = input("Novo nome: ").strip()
-        if not validar_nome(nome):
-            print("Nome inválido!")
-            return
-        idade = int(input("Nova idade: ").strip())
-        print("Especialidades disponíveis:", ESPECIALIDADES)
-        esp = input("Nova especialidade: ").strip()
-        if esp not in ESPECIALIDADES:
-            print("Especialidade inválida!")
-            return
-
-        medicos[idx] = Medico(nome, idade, esp)
-        print("Médico atualizado com sucesso!")
-    except:
-        print("Erro ao editar médico.")
+        indice = int(input("Informe o número do médico para editar: ")) - 1
+        if indice < 0 or indice >= len(medicos):
+            raise IndexError
+        m = medicos[indice]
+        print(f"Editando: {m.nome}")
+        novo_nome = input("Novo nome (vazio p/ manter): ")
+        if novo_nome != "":
+            while any(char.isdigit() for char in novo_nome):
+                print("Erro: o nome não pode conter números.")
+                novo_nome = input("Novo nome: ")
+            m.nome = novo_nome
+        nova_data = input("Nova data de nascimento (dd/mm/aaaa ou vazio p/ manter): ")
+        if nova_data != "":
+            while not validar_data(nova_data):
+                print("Data inválida! Use o formato dd/mm/aaaa.")
+                nova_data = input("Nova data de nascimento: ")
+            m.data_nasc = nova_data
+        novo_crm = input("Novo CRM (vazio p/ manter): ")
+        if novo_crm != "":
+            while not validar_crm(novo_crm):
+                print("CRM inválido! Use um formato como '123456' ou 'CRM/SP 123456'.")
+                novo_crm = input("Novo CRM: ")
+            m.crm = novo_crm
+        nova_esp = input("Nova especialidade (vazio p/ manter): ")
+        if nova_esp != "":
+            m.especialidade = nova_esp
+        print("Médico editado com sucesso!")
+    except (ValueError, IndexError):
+        print("Erro: médico não encontrado.")
 
 def remover_medico():
     listar_medicos()
     try:
-        idx = int(input("Digite o número do médico para remover: "))
-        if idx < 0 or idx >= len(medicos):
-            print("Médico não encontrado.")
-            return
-        medicos.pop(idx)
-        print("Médico removido com sucesso!")
-    except:
-        print("Erro ao remover médico.")
+        indice = int(input("Informe o número do médico para remover: ")) - 1
+        if indice < 0 or indice >= len(medicos):
+            raise IndexError
+        removido = medicos.pop(indice)
+        print(f"Médico '{removido.nome}' removido com sucesso!")
+    except (ValueError, IndexError):
+        print("Erro: médico não encontrado.")
 
-def menu():
-    while True:
-        print("\n--- MENU CLÍNICA ---")
-        print("1. Cadastrar Paciente")
-        print("2. Listar Pacientes")
-        print("3. Editar Paciente")
-        print("4. Remover Paciente")
-        print("5. Cadastrar Médico")
-        print("6. Listar Médicos")
-        print("7. Editar Médico")
-        print("8. Remover Médico")
-        print("9. Sair")
-
-        opcao = input("Escolha: ").strip()
-
-        if opcao == "1":
-            cadastrar_paciente()
-        elif opcao == "2":
-            listar_pacientes()
-        elif opcao == "3":
-            editar_paciente()
-        elif opcao == "4":
-            remover_paciente()
-        elif opcao == "5":
-            cadastrar_medico()
-        elif opcao == "6":
-            listar_medicos()
-        elif opcao == "7":
-            editar_medico()
-        elif opcao == "8":
-            remover_medico()
-        elif opcao == "9":
-            print("Saindo...")
-            break
-        else:
-            print("Opção inválida.")
-menu()
+while True:
+    print("\n===== CLÍNICA MÉDICA =====")
+    print("1 - Cadastrar paciente")
+    print("2 - Listar pacientes")
+    print("3 - Editar paciente")
+    print("4 - Remover paciente")
+    print("5 - Cadastrar médico")
+    print("6 - Listar médicos")
+    print("7 - Editar médico")
+    print("8 - Remover médico")
+    print("9 - Sair")
+    opcao = input("Escolha uma opção: ")
+    if opcao == "1":
+        cadastrar_paciente()
+    elif opcao == "2":
+        listar_pacientes()
+    elif opcao == "3":
+        editar_paciente()
+    elif opcao == "4":
+        remover_paciente()
+    elif opcao == "5":
+        cadastrar_medico()
+    elif opcao == "6":
+        listar_medicos()
+    elif opcao == "7":
+        editar_medico()
+    elif opcao == "8":
+        remover_medico()
+    elif opcao == "9":
+        print("Encerrando o sistema...")
+        break
+    else:
+        print("Opção inválida! Tente novamente.")
