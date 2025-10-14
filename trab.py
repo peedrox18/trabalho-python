@@ -265,7 +265,7 @@ def remover_medico():
 # MENU PRINCIPAL DO SISTEMA
 # Mantém o programa rodando até o usuário decidir sair.
 while True:
-    print("\n===== CLÍNICA MÉDICA =====")
+    print("CLÍNICA MÉDICA")
     print("1 - Cadastrar paciente")
     print("2 - Listar pacientes")
     print("3 - Editar paciente")
@@ -298,4 +298,5 @@ while True:
         break
     else:
         print("Opção inválida! Tente novamente.")
+
 
