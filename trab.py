@@ -92,10 +92,9 @@ def validar_crm(crm_texto):
         return False
     else:
         return False
-
-# ----------------------
+        
 # FUNÇÕES DE PACIENTE
-# ----------------------
+
 def cadastrar_paciente():
     print("\n--- Cadastro de Paciente ---")
     nome = input("Nome: ")
@@ -190,9 +189,8 @@ def remover_paciente():
     except (ValueError, IndexError):
         print("Erro: paciente não encontrado.")
 
-# ----------------------
 # FUNÇÕES DE MÉDICO
-# ----------------------
+
 def cadastrar_medico():
     print("\n--- Cadastro de Médico ---")
     nome = input("Nome: ")
@@ -264,9 +262,7 @@ def remover_medico():
     except (ValueError, IndexError):
         print("Erro: médico não encontrado.")
 
-# ----------------------
 # MENU PRINCIPAL DO SISTEMA
-# ----------------------
 # Mantém o programa rodando até o usuário decidir sair.
 while True:
     print("\n===== CLÍNICA MÉDICA =====")
