@@ -121,7 +121,7 @@ def cadastrar_paciente():
         cor_gravidade = input("Escolha (1-3): ").strip()
         if cor_gravidade in ("1", "2", "3"):
             gravidade = gravidades[int(cor_gravidade) - 1] 
-            break  # -1 é usado porque as listas e m python começam na posição 0
+            break  # -1 é usado porque as listas em python começam na posição 0
         else:
             print("Erro: digite apenas 1, 2 ou 3.")
     # Cria o paciente e adiciona à lista
@@ -298,3 +298,4 @@ while True:
         break
     else:
         print("Opção inválida! Tente novamente.")
+
